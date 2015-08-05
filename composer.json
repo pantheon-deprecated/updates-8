@@ -27,7 +27,8 @@
         "post-install-cmd": "scripts/composer/post-install.sh"
     },
     "config": {
-        "bin-dir": "bin/"
+        "bin-dir": "bin/",
+        "vendor-dir": "web/vendor"
     },
     "extra": {
         "installer-paths": {
