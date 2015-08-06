@@ -13,6 +13,8 @@
 # See below for the availale variables.
 #
 
+DRUSH_VERSION=7
+
 #
 # SITE_NAME
 #
