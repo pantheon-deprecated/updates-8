@@ -7,11 +7,15 @@
         {
             "type": "composer",
             "url": "https://packagist.drupal-composer.org"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/greg-1-anderson/drupal-core"
         }
     ],
     "require": {
         "composer/installers": "^1.0.20",
-        "pantheon-systems/drupal-core": "8.0.*",
+        "greg-1-anderson/drupal-core": "8.0.*",
         "drush/drush": "8.*",
 
         "drupal/devel": "8.1.*@dev",
