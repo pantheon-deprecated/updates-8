@@ -32,15 +32,15 @@
     },
     "config": {
         "bin-dir": "bin/",
-        "vendor-dir": "web/vendor"
+        "vendor-dir": "code/vendor"
     },
     "extra": {
         "installer-paths": {
-            "web/core": ["type:drupal-core"],
-            "web/modules/contrib/{$name}": ["type:drupal-module"],
-            "web/profiles/contrib/{$name}": ["type:drupal-profile"],
-            "web/themes/contrib/{$name}": ["type:drupal-theme"],
-            "web/drush/commands/{$name}": ["type:drupal-drush"]
+            "code/core": ["type:drupal-core"],
+            "code/modules/contrib/{$name}": ["type:drupal-module"],
+            "code/profiles/contrib/{$name}": ["type:drupal-profile"],
+            "code/themes/contrib/{$name}": ["type:drupal-theme"],
+            "code/drush/commands/{$name}": ["type:drupal-drush"]
         }
     }
 }

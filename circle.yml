@@ -14,6 +14,8 @@ test:
 
   override:
     - bin/behat
+    - bin/push-to-pantheon
+    - bin/behat --config=behat-pantheon.yml
 
   post:
     - bin/stop-webserver

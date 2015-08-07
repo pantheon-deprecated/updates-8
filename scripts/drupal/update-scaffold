@@ -5,7 +5,7 @@ ROOT=`realpath "${CWD}/../.."`
 
 drush dl drupal-8 --destination=/tmp --drupal-project-rename=drupal-8 --quiet -y
 
-rsync -avz --delete /tmp/drupal-8/ $ROOT/web \
+rsync -avz --delete /tmp/drupal-8/ $ROOT/code \
  --exclude=.gitkeep \
  --exclude=autoload.php \
  --exclude=composer.json \

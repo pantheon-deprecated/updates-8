@@ -14,11 +14,9 @@ default:
     Behat\MinkExtension:
       goutte: ~
       selenium2: ~
-      base_url: http://localhost:8088
+      base_url: http://dev-updates-8.pantheon.io/
     Drupal\DrupalExtension:
       blackbox: ~
-      api_driver: 'drupal'
+      api_driver: 'drush'
       drush:
-        alias: 'local'
-      drupal:
-        drupal_root: './code'
+        alias: '@pantheon.updates-8.dev'
