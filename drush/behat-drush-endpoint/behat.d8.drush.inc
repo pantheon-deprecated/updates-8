@@ -5,6 +5,12 @@
  * Contains Behat Drush command file, for use by the Behat Drush Extension.
  */
 
+use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\node\Entity\Node;
+use Drupal\node\NodeInterface;
+use Drupal\taxonomy\Entity\Term;
+use Drupal\taxonomy\TermInterface;
+
 include __DIR__ . '/behat-drush-common.inc';
 
 /**
