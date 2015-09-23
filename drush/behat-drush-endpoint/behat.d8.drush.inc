@@ -143,7 +143,7 @@ function _drush_behat_get_entity_field_types($entity_type) {
   return $return;
 }
 
-public function _drush_behat_is_field($entity_type, $field_name) {
+function _drush_behat_is_field($entity_type, $field_name) {
   $fields = \Drupal::entityManager()->getFieldStorageDefinitions($entity_type);
   return (isset($fields[$field_name]) && $fields[$field_name] instanceof FieldStorageConfig);
 }
