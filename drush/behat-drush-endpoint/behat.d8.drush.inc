@@ -115,12 +115,11 @@ function drush_behat_op_create_term($term) {
   // Attempt to decipher any fields that may be specified.
   _drush_behat_expand_entity_fields('taxonomy_term', $term);
 
-  $entity = Term::create((array) $term);
+  $entity = entity_create('taxonomy_term', (array)$term);
   $entity->save();
 
   $term->tid = $entity->id();
   return $term;
-
 }
 
 /**
