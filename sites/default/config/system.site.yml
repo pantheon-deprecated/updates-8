@@ -1,0 +1,12 @@
+uuid: 2f580200-2765-4516-9f02-2b5b419bb750
+name: 'Example Dot Com Test Site'
+mail: john.doe@example.com
+slogan: ''
+page:
+  403: ''
+  404: ''
+  front: /node
+admin_compact_mode: false
+weight_select_max: 100
+langcode: en
+default_langcode: en
