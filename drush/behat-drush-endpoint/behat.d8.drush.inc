@@ -64,6 +64,12 @@ function drush_behat($operation, $json_data) {
   }
 }
 
+function drush_behat_op_batch($args) {
+  $batch =& batch_get();
+  $batch['progressive'] = FALSE;
+  batch_process();
+}
+
 /**
  * Create a node.
  */
@@ -119,4 +125,20 @@ function drush_behat_op_delete_term(\stdClass $term) {
   if ($term instanceof TermInterface) {
     $term->delete();
   }
+}
+
+/**
+ * Get all of the field attached to the specified entity type.
+ *
+ * @see Drupal\Driver\Cores\Drupal8\getEntityFieldTypes in Behat
+ */
+function _drush_behat_get_entity_field_types($entity_type) {
+  $return = array();
+  $fields = \Drupal::entityManager()->getFieldStorageDefinitions($entity_type);
+  foreach ($fields as $field_name => $field) {
+    if ($this->isField($entity_type, $field_name)) {
+      $return[$field_name] = $field->getType();
+    }
+  }
+  return $return;
 }

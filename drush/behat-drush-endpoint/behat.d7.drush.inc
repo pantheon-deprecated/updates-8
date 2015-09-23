@@ -64,6 +64,12 @@ function drush_behat($operation, $json_data) {
   }
 }
 
+function drush_behat_op_batch($args) {
+  $batch =& batch_get();
+  $batch['progressive'] = FALSE;
+  batch_process();
+}
+
 /**
  * Create a node.
  */
@@ -180,4 +186,20 @@ function _drush_behat_expand_entity_properties(\stdClass $entity) {
       continue;
     }
   }
+}
+
+/**
+ * Get all of the field attached to the specified entity type.
+ *
+ * @see Drupal\Driver\Cores\Drupal7\getEntityFieldTypes in Behat
+ */
+function _drush_behat_get_entity_field_types($entity_type) {
+  $return = array();
+  $fields = field_info_field_map();
+  foreach ($fields as $field_name => $field) {
+    if (array_key_exists($entity_type, $field['bundles'])) {
+      $return[$field_name] = $field['type'];
+    }
+  }
+  return $return;
 }
