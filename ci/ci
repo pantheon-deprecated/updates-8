@@ -1,0 +1,58 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * CI script
+ *
+ *   - Find all scripts for the given stage and run them
+ *
+ */
+
+// Get the stage from the command line arguments
+$self_script = array_shift($argv);
+$stage = array_shift($argv);
+if (empty($stage)) {
+  $stage = "test";
+}
+
+// Add the composer bin dir to the PATH
+$PATH = __DIR__ . "/bin:" . getenv("PATH");
+putenv("PATH=$PATH");
+
+// Get some environment variables
+$HOME = getenv("HOME");
+$PEMAIL = getenv("PEMAIL");
+$PPASS = getenv("PPASS");
+$PSITE = getenv("PSITE");
+$PENV = getenv("PENV"); // environment to use for tests of master
+$PRENV = getenv("PRENV"); // environment to use for tests of PRs
+
+// Get the selected branch
+chdir(dirname(__DIR__));
+$BRANCH = exec("git rev-parse --abbrev-ref HEAD");
+
+// Decide which environment variable we'll be using for this test.
+// Copy $PRENV over $PENV if this is a PR, and $PRENV is set.
+if (($BRANCH != "master") && isset($PRENV)) {
+  $PENV = $PRENV;
+  putenv("PENV=$PENV");
+}
+
+//
+// Find all of the scripts for this stage.
+//
+// TODO: We should probably have an environment variable
+// that only runs tests in named directories, rather than
+// enabling every file whose name matches.  If we do
+// this, we should also include the current directory,
+// and always run the scripts there first.
+//
+$Directory = new RecursiveDirectoryIterator(__DIR__);
+$Iterator = new RecursiveIteratorIterator($Directory);
+$RegexIterator = new RegexIterator($Iterator, "/ci-$stage\$/i", RecursiveRegexIterator::GET_MATCH);
+
+foreach($RegexIterator as $name => $object) {
+  $script = $name . " " . implode(" ", $argv);
+  print "\n=== Run CI script: $script\n";
+  passthru($script);
+}

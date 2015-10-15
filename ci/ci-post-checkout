@@ -1,0 +1,30 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * Do post-checkout processing.
+ *
+ *   - Find all .erb files and process them.
+ *
+ * We do template processing so that test scripts can inject
+ * environment variables such as <%= ENV['PENV'] %> (dev, test,
+ * live or multidev name) and %= ENV['PSITE'] %> (Pantheon site name)
+ * into their files, e.g. behat.yml, so that it is not necessary
+ * to hardcode information that changes per environment.
+ *
+ * Examples:
+ *
+ *   URI:   http://<%= ENV['PENV'] %>-<%= ENV['PSITE'] %>.pantheon.io/
+ *   Alias: @pantheon-ci.<%= ENV['PSITE'] %>.<%= ENV['PENV'] %>
+ */
+
+// Find all of the *.circle.erb files.
+$Directory = new RecursiveDirectoryIterator(__DIR__);
+$Iterator = new RecursiveIteratorIterator($Directory);
+$RegexIterator = new RegexIterator($Iterator, '/\.ci\.erb$/i', RecursiveRegexIterator::GET_MATCH);
+
+foreach($RegexIterator as $tmpl => $object) {
+  $target = preg_replace('/\.ci\.erb/', '', $tmpl);
+  print "Process template $tmpl; target is $target\n";
+  passthru("erb '$tmpl' > '$target'");
+}

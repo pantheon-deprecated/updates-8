@@ -1,0 +1,155 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * Initialization for testing on Pantheon
+ *
+ *   - Install ci/composer.json
+ *   - Require projects listed in TEST_PROJECTS environment variable
+ *   - Copy files to remote Pantheon environment
+ */
+
+// Move to the circle dir, which contains composer.json
+chdir(__DIR__);
+
+// If there is an environment variable defined that contains
+// a GitHub OAuth token, then tell Composer to use it.
+// https://github.com/composer/composer/blob/master/doc/articles/troubleshooting.md#api-rate-limit-and-oauth-tokens
+$github_oauth = getenv("GITHUB_OAUTH_TOKEN");
+if (!empty($github_oauth)) {
+  passthru("composer config -g github-oauth.github.com '$github_oauth'");
+}
+
+// Run 'composer install'
+passthru("composer install");
+
+// Follow that up with 'composer require $TEST_PROJECTS'
+$extra = getenv("TEST_PROJECTS");
+if (!empty($extra)) {
+  passthru("composer require $extra");
+}
+
+// Add the composer bin dir to the PATH
+$PATH = __DIR__ . "/bin:" . getenv("PATH");
+putenv("PATH=$PATH");
+
+// Get some environment variables
+$HOME = getenv("HOME");
+$PEMAIL = getenv("PEMAIL");
+$PPASS = getenv("PPASS");
+$PSITE = getenv("PSITE");
+$PENV = getenv("PENV"); // environment to use for tests of master
+$PRENV = getenv("PRENV"); // environment to use for tests of PRs
+
+// Get the selected branch
+chdir(dirname(__DIR__));
+$BRANCH = exec("git rev-parse --abbrev-ref HEAD");
+
+// Decide which environment variable we'll be using for this test.
+// Copy $PRENV over $PENV if this is a PR, and $PRENV is set.
+// TODO: Have a mode that will create a new Multidev instance
+// for the explicit purpose of running this test.  We'll need
+// to delete it when we're done too.
+if (($BRANCH != "master") && isset($PRENV)) {
+  $PENV = $PRENV;
+  putenv("PENV=$PENV");
+}
+
+// Log on to Terminus
+passthru("terminus auth login '$PEMAIL' --password='$PPASS'");
+
+// Fetch the Drush aliases
+@mkdir("$HOME/.drush");
+passthru("terminus sites aliases --location=$HOME/.drush/pantheon-ci.aliases.drushrc.php");
+
+// Try to wake up the test site
+exec("terminus site wake --site='$PSITE' --env='$PENV'", $output, $status_code);
+$PENV_EXISTS = ($status_code == 0);
+
+// If the site does not exist, then create a multidev
+// environment based off of the 'dev' site.
+if (!$PENV_EXISTS) {
+  passthru("terminus site create-env --site='$PSITE' --env='$PENV' --from-env='dev'");
+}
+
+print("\n------- get site UUID\n");
+// Get the site UUID from Terminus
+$PUUID = exec("terminus site info --site='$PSITE' --field=id 2>/dev/null");
+
+$PUUID = preg_replace("#[^:]*: *#", "", $PUUID);
+
+print("\n\nPUUID is $PUUID\n");
+
+// If we're pushing to a multidev site, use rsync.
+// If the target is the 'dev' site, use git so that
+// we keep the commit history.
+
+if ($PENV != 'dev') {
+  // Switch to "sftp" mode.  We should already be there.
+  passthru("terminus site connection-mode --site='$PSITE' --env='$PENV' --set=sftp");
+
+  $rsync_options = "-e 'ssh -p 2222' -rlvz --size-only --ipv4 --progress --temp-dir=../tmp/";
+  $server = "$PENV.$PUUID@appserver.$PENV.$PUUID.drush.in";
+
+  $source = dirname(__DIR__);
+  $destination = "$server:code";
+
+  // Copy all of the files to test to the Pantheon environment.
+  passthru("rsync $rsync_options $source/ $destination");
+}
+else {
+  // Switch to "git" mode
+  passthru("terminus site connection-mode --site='$PSITE' --env='$PENV' --set=git");
+
+  // Check to see whether $PANTHEON_BRANCH can have $BRANCH merged into it
+  $PANTHEON_BRANCH = ($PENV == "dev") ? "master" : $PENV;
+  $FORCE = "";
+  if ($BRANCH != $PANTHEON_BRANCH) {
+    $merge_base = exec("git merge-base $BRANCH $PANTHEON_BRANCH");
+    $verify = exec("git rev-parse --verify $PANTHEON_BRANCH");
+    // If $BRANCH can be merged into $PANTHEON_BRANCH, then do it;
+    // if $BRANCH is not a superset of $PANTHEON_BRANCH, then we
+    // delete $PANTHEON_BRANCH, recreate it from $BRANCH, and force-push.
+    if ($verify == $merge_base) {
+      passthru("git checkout $PANTHEON_BRANCH");
+      passthru("git merge $BRANCH");
+    }
+    else {
+      passthru("git checkout -B $PANTHEON_BRANCH $BRANCH");
+      $FORCE = "--force";
+    }
+  }
+
+  // For now, always force
+  $FORCE = "--force";
+
+  // Get a reference to the Pantheon site's git repository.
+  $REPO = "ssh://codeserver.dev.$PUUID@codeserver.dev.$PUUID.drush.in:2222/~/repository.git";
+
+  print("\nREPO is $REPO\n");
+
+  // Check to see if we already have a 'pantheon' remote
+  $has_pantheon = exec("git remote show pantheon 2>/dev/null");
+
+  if (empty($has_pantheon)) {
+    // Add a remote to our git repository
+    passthru("git remote add pantheon $REPO");
+  }
+  else {
+    // Make sure that our remote URL is correct
+    passthru("git remote set-url pantheon $REPO");
+  }
+
+  // Push the branch we are working on up to Pantheon.
+  passthru("git push pantheon $PANTHEON_BRANCH $FORCE");
+
+}
+
+// Wipe the test site
+passthru("terminus site wipe --site='$PSITE' --env='$PENV' --yes");
+
+// Switch back to "sftp" mode to prepare to install
+passthru("terminus site connection-mode --site='$PSITE' --env='$PENV' --set=sftp");
+
+// Install the site with Drush
+// passthru("drush @$PSITE.$PENV --yes site-install standard --site-name='Example Dot Com Test Site' --account-name=admin --account-pass=password");

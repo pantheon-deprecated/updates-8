@@ -1,0 +1,32 @@
+#
+# Pantheon circle.yml - runs Behat tests on Pantheon.
+#
+# Pantheon tests are found in circle/behat/pantheon-tests.
+# See the circle/behat/README.md file in that directory for
+# instructions on configuring these tests to run on your
+# remote Pantheon instance, and on adding your own tests.
+#
+# See the circle/README.md for instructions on adding
+# other sorts of tests.
+#
+#
+machine:
+  php:
+    version: 5.5.11
+  hosts:
+    localhost: 127.0.0.1
+
+checkout:
+  post:
+    - ci/ci post-checkout
+    - ci/init-pantheon
+
+test:
+  pre:
+    - ci/ci pre-test
+
+  override:
+    - ci/ci test
+
+  post:
+    - ci/ci post-test

@@ -1,0 +1,25 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * Initialization for local testing.
+ *
+ * Here, "local" means the system that will be
+ * running Behat.  This could be the developer's
+ * machine, or the CI server.
+ */
+
+// Add the composer bin dir to the PATH
+$PATH = __DIR__ . "/bin:" . getenv("PATH");
+putenv("PATH=$PATH");
+
+// Install Drupal
+putenv("ALIAS=@localcitest");
+
+$RS_PORT = getenv("RS_PORT");
+putenv("PORT=$RS_PORT");
+
+
+passthru("install-drupal");
+
+passthru("start-webserver");
